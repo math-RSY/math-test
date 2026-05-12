@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>유리수 연산 마스터 (Master Sync v1.3)</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.min.js" id="MathJax-script" async></script>
+    <style>
+        :root { --primary: #0d6efd; --danger: #e84118; --success: #198754; --background: #f0f2f5; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: var(--background); font-family: 'Malgun Gothic', sans-serif; -webkit-user-select: none; }
+
+        /* 보안/이탈 레이어 */
+        #lockOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 30000; color: white; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        
+        .container { display: flex; flex-direction: column; height: 100%; width: 100%; max-width: 800px; margin: 0 auto; background: white; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+
+        /* 로고 */
+        .dad-logo-fixed { position: fixed; bottom: 15px; left: 15px; transform: scale(0.3); transform-origin: bottom left; z-index: 15000; pointer-events: none; }
+        .logo-container { background-color: #000; padding: 5px 10px; border: 1px solid #1a1a1a; display: inline-flex; flex-direction: column; align-items: center; }
+        .logo-text { font-family: Georgia; font-size: 35px; font-weight: bold; color: #FFD700; line-height: 1.1; text-shadow: 0 0 7px #FF00FF; }
+
+        /* 상단 관리자 패널 */
+        #adminPanel { display: none; background: #2c3e50; color: white; padding: 15px; max-height: 60%; overflow-y: auto; z-index: 20000; position: absolute; top: 0; width: 100%; box-sizing: border-box; }
+        .admin-table { width: 100%; border-collapse: collapse; background: white; color: black; font-size: 0.85rem; margin-top: 10px; }
+        .admin-table th, .admin-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        .status-warn { background: #ff7675 !important; color: white; font-weight: bold; }
+        .status-success { background: #55efc4 !important; }
+
+        /* 문제 풀이 영역 */
+        #stepMenu { display: flex; overflow-x: auto; padding: 10px; gap: 10px; background: #eee; flex-shrink: 0; }
+        .step-btn { flex: 0 0 auto; padding: 8px 15px; border-radius: 8px; border: 2px solid var(--primary); background: white; font-weight: bold; cursor: pointer; }
+        .step-btn.active { background: var(--primary); color: white; }
+
+        #studentView { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+        #problemArea { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px; }
+        .prob-card { margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #eee; font-size: 1.4rem; }
+
+        /* 입력 UI */
+        .input-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+        .frac-group { display: inline-flex; align-items: center; gap: 5px; background: #f1f3f5; padding: 10px; border-radius: 12px; border: 1px solid #ced4da; }
+        .sign-btn { width: 45px; height: 45px; font-size: 1.5rem; font-weight: bold; border: 2px solid #adb5bd; background: white; border-radius: 8px; cursor: pointer; }
+        .sign-btn.active { background: var(--primary); color: white; }
+        .frac-inputs input { width: 60px; height: 35px; text-align: center; font-size: 1.2rem; border: 1px solid #adb5bd; border-radius: 4px; }
+        .frac-inputs hr { width: 100%; margin: 4px 0; border: 0; border-top: 2px solid #495057; }
+        .int-input { width: 120px; height: 50px; text-align: center; font-size: 1.5rem; border: 2px solid var(--primary); border-radius: 10px; }
+
+        /* 버튼류 */
+        .footer-area { position: absolute; bottom: 0; left: 0; width: 100%; padding: 25px; background: linear-gradient(transparent, white 40%); text-align: center; pointer-events: none; }
+        #submitBtn { pointer-events: auto; padding: 15px 60px; font-size: 1.3rem; font-weight: bold; border-radius: 50px; background: var(--success); color: white; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .admin-trigger { position: fixed; bottom: 10px; right: 10px; z-index: 25000; color: #ced4da; cursor: pointer; font-size: 10px; }
+        .login-input { width: 80%; max-width: 300px; padding: 15px; font-size: 1.1rem; margin-bottom: 15px; border-radius: 12px; border: 2px solid #dee2e6; text-align: center; }
+
+        button.admin-btn { padding: 5px 12px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; margin-bottom: 3px; }
+        .btn-orange { background: #ff9f43; color: white; }
+        .btn-red { background: var(--danger); color: white; }
+        .btn-gray { background: #576574; color: white; }
+    </style>
+</head>
+<body>
+
+<div id="lockOverlay"><h1>🚫 화면 이탈 감시 중</h1><p>시험 화면으로 돌아가세요.</p><button onclick="requestFullScreen()">복귀</button></div>
+<div class="dad-logo-fixed"><div class="logo-container"><div class="logo-text">D.A.D.</div></div></div>
+<div class="admin-trigger" onclick="adminAuth()">[Admin]</div>
+
+<div class="container">
+    <div id="adminPanel">
+        <div style="display:flex; justify-content:space-between; align-items:start;">
+            <b style="color:#fbc531;">📡 마스터 대시보드</b>
+            <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                <div>
+                    <button class="admin-btn btn-orange" onclick="masterReveal('on')">전체 정답 공개</button>
+                    <button class="admin-btn btn-gray" onclick="masterReveal('off')">전체 정답 숨김</button>
+                </div>
+                <div>
+                    <button class="admin-btn btn-gray" onclick="updateAdminDisplay()">수동 갱신</button>
+                    <button class="admin-btn btn-red" onclick="clearCloudData()">전체 초기화</button>
+                    <button class="admin-btn btn-gray" onclick="document.getElementById('adminPanel').style.display='none'">닫기</button>
+                </div>
+            </div>
+        </div>
+        <table class="admin-table">
+            <thead><tr style="background:#f8f9fa"><th>학번</th><th>이름</th><th>상태</th><th>단계</th><th>점수</th></tr></thead>
+            <tbody id="adminBody"></tbody>
+        </table>
+    </div>
+
+    <div id="loginOverlay" style="padding:60px 20px; text-align:center;">
+        <h2 style="color:var(--primary); margin-bottom:30px;">📐 유리수 연산 마스터</h2>
+        <input type="text" id="sid" class="login-input" placeholder="학번 5자리" maxlength="5" inputmode="numeric"><br>
+        <input type="text" id="sname" class="login-input" placeholder="이름 입력" onkeypress="if(event.keyCode==13) startApp()"><br>
+        <button onclick="startApp()" style="width:80%; max-width:300px; padding:20px; background:var(--primary); color:white; border-radius:15px; font-weight:bold; cursor:pointer;">시험 시작</button>
+    </div>
+
+    <div id="studentView">
+        <div id="stepMenu"></div>
+        <div id="problemArea"></div>
+        <div class="footer-area"><button id="submitBtn" onclick="grade()" style="display:none;">제출 및 채점</button></div>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfXdM49svVVl7H7LdR3P-GxEsA9jpKuUzpY0plz9ebMip4jaK_WzFwHzU7QJo_TeGy/exec";
+    let userData = { id: '', name: '' }, currentStep = 0, currentAnswers = [], isLive = false, isAdminOpen = false, masterRevealState = false;
+
+    // --- [클라우드 연동] ---
+    async function sendToCloud(status, score = '-') {
+        if (!userData.id || !isLive) return;
+        fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ sid: userData.id, name: userData.name, status: status, step: currentStep, score: score, time: new Date().toLocaleTimeString() })}).catch(e => {});
+    }
+
+    // 마스터 설정 변경 (선생님용)
+    async function masterReveal(state) {
+        const action = state === 'on' ? 'master_reveal_on' : 'master_reveal_off';
+        await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: action })});
+        alert(state === 'on' ? "모든 학생에게 정답이 공개됩니다." : "정답이 다시 숨겨집니다.");
+    }
+
+    // 관리자 화면 갱신
+    async function updateAdminDisplay() {
+        if (!isAdminOpen) return;
+        try {
+            const response = await fetch(SCRIPT_URL);
+            const data = await response.json();
+            const tbody = document.getElementById('adminBody');
+            tbody.innerHTML = '';
+            data.filter(r => r.sid !== 'MASTER_CONFIG').sort((a, b) => a.sid - b.sid).forEach(row => {
+                const isWarn = row.status.includes("이탈");
+                tbody.innerHTML += `<tr><td>${row.sid}</td><td>${row.name}</td><td class="${isWarn ? 'status-warn' : ''}">${row.status}</td><td>${row.step}단</td><td>${row.score}</td></tr>`;
+            });
+        } catch(e) {}
+    }
+
+    // 학생용: 마스터 상태 체크 (15초마다)
+    async function checkMasterConfig() {
+        if (!isLive) return;
+        try {
+            const resp = await fetch(SCRIPT_URL);
+            const data = await resp.json();
+            const config = data.find(r => r.sid === 'MASTER_CONFIG');
+            if (config) {
+                masterRevealState = (config.status === "ON");
+                toggleStudentAnswers();
+            }
+        } catch(e) {}
+    }
+
+    function toggleStudentAnswers() {
+        document.querySelectorAll('.correct-label').forEach(l => {
+            l.style.display = masterRevealState ? 'inline' : 'none';
+        });
+    }
+
+    async function clearCloudData() {
+        if (confirm("⚠️ 모든 기록을 영구 삭제합니까?")) {
+            await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: 'clear' })});
+            alert("삭제됨"); updateAdminDisplay();
+        }
+    }
+
+    // --- [수학 엔진] ---
+    function seededRandom() { problemSeed = (problemSeed * 9301 + 49297) % 233280; return problemSeed / 233280; }
+    const MathCore = {
+        gcd: (a, b) => b ? MathCore.gcd(b, a % b) : Math.abs(a),
+        fCreate: (n, d = 1) => { const g = MathCore.gcd(n, d); let fn = n / g, fd = d / g; if (fd < 0) { fn *= -1; fd *= -1; } return { n: fn, d: fd }; },
+        fTex: (f) => f.d === 1 ? (f.n < 0 ? `(${f.n})` : `${f.n}`) : (f.n < 0 ? `\\left( -\\frac{${Math.abs(f.n)}}{${f.d}} \\right)` : `\\frac{${f.n}}{${f.d}}`),
+        fCalc: (f1, f2, op) => {
+            if (op === 0) return MathCore.fCreate(f1.n * f2.d + f2.n * f1.d, f1.d * f2.d);
+            if (op === 1) return MathCore.fCreate(f1.n * f2.d - f2.n * f1.d, f1.d * f2.d);
+            if (op === 2) return MathCore.fCreate(f1.n * f2.n, f1.d * f2.d);
+            if (op === 3) return f2.n === 0 ? f1 : MathCore.fCreate(f1.n * f2.d, f1.d * f2.n);
+        }
+    };
+
+    function generateProblem(step) {
+        const sr = (min, max) => Math.floor(seededRandom() * (max - min + 1)) + min;
+        const srf = () => MathCore.fCreate(sr(-6, 6) || 1, sr(1, 5));
+        const ops = ['+', '-', '\\times', '\\div'];
+        if (step <= 2) {
+            let b = sr(-10, 10) || 1, a = (step === 2 ? b * sr(-10, 10) : sr(-20, 20)), op = (step === 1 ? sr(0, 1) : sr(2, 3));
+            return { html: `\\(${a < 0 ? '('+a+')' : a} ${ops[op]} ${b < 0 ? '('+b+')' : b}\\)`, ans: MathCore.fCreate(op === 0 ? a + b : op === 1 ? a - b : op === 2 ? a * b : a / b) };
+        }
+        if (step === 5) {
+            let f1 = srf(), f2 = srf(), f3 = srf(), o1 = sr(0, 3), o2 = sr(0, 3);
+            return { html: `\\(${MathCore.fTex(f1)} ${ops[o1]} ${MathCore.fTex(f2)} ${ops[o2]} ${MathCore.fTex(f3)}\\)`, ans: MathCore.fCalc(MathCore.fCalc(f1, f2, o1), f3, o2) };
+        }
+        if (step === 6) {
+            let cnt = sr(3, 5); let res = srf(), html = MathCore.fTex(res);
+            for(let i=0; i<cnt-1; i++){
+                let nxt = srf(), op = sr(0, 3), type = sr(0, 2);
+                let tTex = type === 1 ? `|${MathCore.fTex(nxt)}|` : type === 2 ? `(${MathCore.fTex(nxt)})^2` : MathCore.fTex(nxt);
+                let tVal = type === 1 ? MathCore.fCreate(Math.abs(nxt.n), nxt.d) : type === 2 ? MathCore.fCalc(nxt, nxt, 2) : nxt;
+                html += ` ${ops[op]} ${tTex}`; res = MathCore.fCalc(res, tVal, op);
+            }
+            return { html: `\\(${html}\\)`, ans: res };
+        }
+        if (step === 7) {
+            let cnt = sr(5, 8); let res = srf(), html = MathCore.fTex(res);
+            for (let i = 1; i < cnt; i++) {
+                let nxt = srf(), op = sr(0, 3); html += ` ${ops[op]} ${MathCore.fTex(nxt)}`; res = MathCore.fCalc(res, nxt, op);
+                if (i === 1) html = `\\left( ${html} \\right)`; if (i === 3) html = `\\left[ ${html} \\right]`; if (i === 5) html = `\\left\\{ ${html} \\right\\}`;
+            }
+            return { html: `\\(${html}\\)`, ans: res };
+        }
+        let f1 = srf(), f2 = srf(), op = (step === 3 ? sr(0, 1) : sr(2, 3));
+        return { html: `\\(${MathCore.fTex(f1)} ${ops[op]} ${MathCore.fTex(f2)}\\)`, ans: MathCore.fCalc(f1, f2, op) };
+    }
+
+    // --- [앱 제어] ---
+    function startApp() {
+        userData.id = document.getElementById('sid').value.trim();
+        userData.name = document.getElementById('sname').value.trim();
+        if(userData.id.length !== 5 || !userData.name) return alert("정보 입력!");
+        problemSeed = parseInt(userData.id); isLive = true;
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('studentView').style.display = 'flex';
+        const menu = document.getElementById('stepMenu'); menu.innerHTML = '';
+        for(let i=1; i<=7; i++) menu.innerHTML += `<button class="step-btn" id="btn-${i}" onclick="loadStep(${i})">${i}단계</button>`;
+        requestFullScreen(); sendToCloud("입장");
+        setInterval(checkMasterConfig, 15000); // 15초마다 마스터 명령 확인
+    }
+
+    function loadStep(s) {
+        currentStep = s;
+        document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-'+s).classList.add('active');
+        document.getElementById('submitBtn').style.display = 'inline-block';
+        problemSeed = parseInt(userData.id) + s * 1000;
+        const area = document.getElementById('problemArea'); area.innerHTML = ''; currentAnswers = [];
+        for(let i=0; i<20; i++) {
+            let p = generateProblem(s); currentAnswers.push(p.ans);
+            let ui = (s <= 2) ? `<input type="text" id="ans-${i}" class="int-input" inputmode="numeric">` :
+                `<div class="frac-group"><button class="sign-btn active" onclick="this.innerText=(this.innerText=='+'?'-':'+')">+</button><div class="frac-inputs"><input type="text" id="num-${i}" inputmode="numeric"><hr><input type="text" id="den-${i}" inputmode="numeric" value="1"></div></div>`;
+            area.innerHTML += `<div class="prob-card"><b>${i+1}.</b> ${p.html} = <div class="input-row">${ui}<span class="correct-label" id="lab-${i}" style="display:${masterRevealState?'inline':'none'}; color:red; font-weight:bold; margin-left:10px;">[정답: ${p.ans.n}${p.ans.d===1?'':'/'+p.ans.d}]</span></div></div>`;
+        }
+        if (window.MathJax && window.MathJax.typeset) window.MathJax.typeset();
+        area.scrollTop = 0; sendToCloud(s + "단계 진행");
+    }
+
+    function grade() {
+        let score = 0;
+        for(let i=0; i<20; i++) {
+            let uN, uD = 1, t = currentAnswers[i];
+            try {
+                if(currentStep <= 2) uN = parseInt(document.getElementById(`ans-${i}`).value);
+                else {
+                    let sign = document.getElementById(`num-${i}`).closest('.frac-group').querySelector('.sign-btn').innerText;
+                    uN = Math.abs(parseInt(document.getElementById(`num-${i}`).value)) * (sign==='-'?-1:1);
+                    uD = parseInt(document.getElementById(`den-${i}`).value) || 1;
+                }
+                if(uN === t.n && uD === t.d) score += 5;
+            } catch(e){}
+        }
+        alert(score + "점 제출됨"); sendToCloud("제출완료", score);
+    }
+
+    function adminAuth() { if(prompt("Pass?") === "tngkr1234") { isAdminOpen = true; document.getElementById('adminPanel').style.display='block'; updateAdminDisplay(); setInterval(updateAdminDisplay, 10000); } }
+    function requestFullScreen() { const el = document.documentElement; if (el.requestFullscreen) el.requestFullscreen(); else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); }
+    window.addEventListener('blur', () => { if(isLive) { document.getElementById('lockOverlay').style.display = 'flex'; sendToCloud("⚠️ 이탈"); } });
+    window.addEventListener('focus', () => { if(isLive) { document.getElementById('lockOverlay').style.display = 'none'; sendToCloud(currentStep + "단 복귀"); } });
+</script>
+</body>
+</html>
