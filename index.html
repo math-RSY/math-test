@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>유리수 연산 마스터 (Master Sync v1.3)</title>
+    <title>유리수 연산 마스터 (Master Sync v1.4)</title>
     <script>
         window.MathJax = {
             tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
@@ -20,17 +20,19 @@
         
         .container { display: flex; flex-direction: column; height: 100%; width: 100%; max-width: 800px; margin: 0 auto; background: white; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
 
-        /* 로고 */
-        .dad-logo-fixed { position: fixed; bottom: 15px; left: 15px; transform: scale(0.3); transform-origin: bottom left; z-index: 15000; pointer-events: none; }
-        .logo-container { background-color: #000; padding: 5px 10px; border: 1px solid #1a1a1a; display: inline-flex; flex-direction: column; align-items: center; }
-        .logo-text { font-family: Georgia; font-size: 35px; font-weight: bold; color: #FFD700; line-height: 1.1; text-shadow: 0 0 7px #FF00FF; }
+        /* --- [D.A.D. 로고 스타일 통합] --- */
+        .dad-logo-fixed { position: fixed; bottom: 15px; left: 15px; transform: scale(0.3); transform-origin: bottom left; z-index: 15000; pointer-events: none; font-family: Georgia, serif; }
+        .signature-container { display: flex; align-items: center; color: #DDD; font-size: 16px; font-weight: bold; }
+        .logo-container { background-color: #000; border: 1px solid #1a1a1a; display: inline-flex; flex-direction: column; justify-content: center; align-items: center; padding: 0px 5px; margin-left: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.7); }
+        .logo-text { font-size: 40px; font-weight: bold; color: #FFD700; margin: 0; line-height: 1; text-shadow: 0 0 7px #FF00FF, 0 0 15px #FFD700; }
+        .initial { letter-spacing: 12px; display: inline-block; margin-right: -13px; }
+        .dot { margin: 0; padding: 0; display: inline-block; position: relative; top: -5px; font-size: 35px; line-height: 1; }
+        .sub-text { font-size: 8px; color: #a8a8a8; letter-spacing: 1px; margin-top: 2px; line-height: 1; }
 
         /* 상단 관리자 패널 */
         #adminPanel { display: none; background: #2c3e50; color: white; padding: 15px; max-height: 60%; overflow-y: auto; z-index: 20000; position: absolute; top: 0; width: 100%; box-sizing: border-box; }
         .admin-table { width: 100%; border-collapse: collapse; background: white; color: black; font-size: 0.85rem; margin-top: 10px; }
         .admin-table th, .admin-table td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-        .status-warn { background: #ff7675 !important; color: white; font-weight: bold; }
-        .status-success { background: #55efc4 !important; }
 
         /* 문제 풀이 영역 */
         #stepMenu { display: flex; overflow-x: auto; padding: 10px; gap: 10px; background: #eee; flex-shrink: 0; }
@@ -55,34 +57,31 @@
         #submitBtn { pointer-events: auto; padding: 15px 60px; font-size: 1.3rem; font-weight: bold; border-radius: 50px; background: var(--success); color: white; border: none; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .admin-trigger { position: fixed; bottom: 10px; right: 10px; z-index: 25000; color: #ced4da; cursor: pointer; font-size: 10px; }
         .login-input { width: 80%; max-width: 300px; padding: 15px; font-size: 1.1rem; margin-bottom: 15px; border-radius: 12px; border: 2px solid #dee2e6; text-align: center; }
-
-        button.admin-btn { padding: 5px 12px; cursor: pointer; border-radius: 5px; border: none; font-weight: bold; margin-bottom: 3px; }
-        .btn-orange { background: #ff9f43; color: white; }
-        .btn-red { background: var(--danger); color: white; }
-        .btn-gray { background: #576574; color: white; }
     </style>
 </head>
 <body>
 
 <div id="lockOverlay"><h1>🚫 화면 이탈 감시 중</h1><p>시험 화면으로 돌아가세요.</p><button onclick="requestFullScreen()">복귀</button></div>
-<div class="dad-logo-fixed"><div class="logo-container"><div class="logo-text">D.A.D.</div></div></div>
+
+<div class="dad-logo-fixed">
+    <div class="signature-container">
+        by
+        <div class="logo-container">
+            <div class="logo-text">
+                <span class="initial">D</span><span class="dot">.</span><span class="initial">A</span><span class="dot">.</span><span class="initial" style="margin-right: 0; letter-spacing: 0;">D</span><span class="dot">.</span>
+            </div>
+            <div class="sub-text">Desiring Angel Devil</div>
+        </div>
+    </div>
+</div>
+
 <div class="admin-trigger" onclick="adminAuth()">[Admin]</div>
 
 <div class="container">
     <div id="adminPanel">
         <div style="display:flex; justify-content:space-between; align-items:start;">
             <b style="color:#fbc531;">📡 마스터 대시보드</b>
-            <div style="display:flex; flex-direction:column; align-items:flex-end;">
-                <div>
-                    <button class="admin-btn btn-orange" onclick="masterReveal('on')">전체 정답 공개</button>
-                    <button class="admin-btn btn-gray" onclick="masterReveal('off')">전체 정답 숨김</button>
-                </div>
-                <div>
-                    <button class="admin-btn btn-gray" onclick="updateAdminDisplay()">수동 갱신</button>
-                    <button class="admin-btn btn-red" onclick="clearCloudData()">전체 초기화</button>
-                    <button class="admin-btn btn-gray" onclick="document.getElementById('adminPanel').style.display='none'">닫기</button>
-                </div>
-            </div>
+            <button class="admin-btn" onclick="document.getElementById('adminPanel').style.display='none'">닫기</button>
         </div>
         <table class="admin-table">
             <thead><tr style="background:#f8f9fa"><th>학번</th><th>이름</th><th>상태</th><th>단계</th><th>점수</th></tr></thead>
@@ -93,7 +92,8 @@
     <div id="loginOverlay" style="padding:60px 20px; text-align:center;">
         <h2 style="color:var(--primary); margin-bottom:30px;">📐 유리수 연산 마스터</h2>
         <input type="text" id="sid" class="login-input" placeholder="학번 5자리" maxlength="5" inputmode="numeric"><br>
-        <input type="text" id="sname" class="login-input" placeholder="이름 입력" onkeypress="if(event.keyCode==13) startApp()"><br>
+        <input type="text" id="sname" class="login-input" placeholder="이름 입력"><br>
+        <input type="text" id="syncCode" class="login-input" placeholder="문제 코드 (선택 사항)" style="border-color:#ff7675; background:#fffafa;"><br>
         <button onclick="startApp()" style="width:80%; max-width:300px; padding:20px; background:var(--primary); color:white; border-radius:15px; font-weight:bold; cursor:pointer;">시험 시작</button>
     </div>
 
@@ -106,65 +106,13 @@
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfXdM49svVVl7H7LdR3P-GxEsA9jpKuUzpY0plz9ebMip4jaK_WzFwHzU7QJo_TeGy/exec";
-    let userData = { id: '', name: '' }, currentStep = 0, currentAnswers = [], isLive = false, isAdminOpen = false, masterRevealState = false;
+    let userData = { id: '', name: '' }, currentStep = 0, currentAnswers = [], isLive = false, masterSeed = 0;
 
-    // --- [클라우드 연동] ---
-    async function sendToCloud(status, score = '-') {
-        if (!userData.id || !isLive) return;
-        fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ sid: userData.id, name: userData.name, status: status, step: currentStep, score: score, time: new Date().toLocaleTimeString() })}).catch(e => {});
-    }
-
-    // 마스터 설정 변경 (선생님용)
-    async function masterReveal(state) {
-        const action = state === 'on' ? 'master_reveal_on' : 'master_reveal_off';
-        await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: action })});
-        alert(state === 'on' ? "모든 학생에게 정답이 공개됩니다." : "정답이 다시 숨겨집니다.");
-    }
-
-    // 관리자 화면 갱신
-    async function updateAdminDisplay() {
-        if (!isAdminOpen) return;
-        try {
-            const response = await fetch(SCRIPT_URL);
-            const data = await response.json();
-            const tbody = document.getElementById('adminBody');
-            tbody.innerHTML = '';
-            data.filter(r => r.sid !== 'MASTER_CONFIG').sort((a, b) => a.sid - b.sid).forEach(row => {
-                const isWarn = row.status.includes("이탈");
-                tbody.innerHTML += `<tr><td>${row.sid}</td><td>${row.name}</td><td class="${isWarn ? 'status-warn' : ''}">${row.status}</td><td>${row.step}단</td><td>${row.score}</td></tr>`;
-            });
-        } catch(e) {}
-    }
-
-    // 학생용: 마스터 상태 체크 (15초마다)
-    async function checkMasterConfig() {
-        if (!isLive) return;
-        try {
-            const resp = await fetch(SCRIPT_URL);
-            const data = await resp.json();
-            const config = data.find(r => r.sid === 'MASTER_CONFIG');
-            if (config) {
-                masterRevealState = (config.status === "ON");
-                toggleStudentAnswers();
-            }
-        } catch(e) {}
-    }
-
-    function toggleStudentAnswers() {
-        document.querySelectorAll('.correct-label').forEach(l => {
-            l.style.display = masterRevealState ? 'inline' : 'none';
-        });
-    }
-
-    async function clearCloudData() {
-        if (confirm("⚠️ 모든 기록을 영구 삭제합니까?")) {
-            await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ action: 'clear' })});
-            alert("삭제됨"); updateAdminDisplay();
-        }
-    }
-
-    // --- [수학 엔진] ---
+    // --- [시드 기반 랜덤 함수] ---
+    let problemSeed = 1;
     function seededRandom() { problemSeed = (problemSeed * 9301 + 49297) % 233280; return problemSeed / 233280; }
+
+    // --- [수학 엔진 - 선생님이 만족하신 로직 그대로 보존] ---
     const MathCore = {
         gcd: (a, b) => b ? MathCore.gcd(b, a % b) : Math.abs(a),
         fCreate: (n, d = 1) => { const g = MathCore.gcd(n, d); let fn = n / g, fd = d / g; if (fd < 0) { fn *= -1; fd *= -1; } return { n: fn, d: fd }; },
@@ -215,14 +163,24 @@
     function startApp() {
         userData.id = document.getElementById('sid').value.trim();
         userData.name = document.getElementById('sname').value.trim();
-        if(userData.id.length !== 5 || !userData.name) return alert("정보 입력!");
-        problemSeed = parseInt(userData.id); isLive = true;
+        const code = document.getElementById('syncCode').value.trim();
+        
+        if(userData.id.length !== 5 || !userData.name) return alert("학번과 이름을 정확히 입력하세요!");
+        
+        // 동기화 시드 결정: 코드가 있으면 코드 기반, 없으면 랜덤
+        if (code) {
+            let hash = 0; for (let i = 0; i < code.length; i++) hash = ((hash << 5) - hash) + code.charCodeAt(i);
+            masterSeed = Math.abs(hash);
+        } else {
+            masterSeed = Math.floor(Math.random() * 1000000);
+        }
+
+        isLive = true;
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('studentView').style.display = 'flex';
         const menu = document.getElementById('stepMenu'); menu.innerHTML = '';
         for(let i=1; i<=7; i++) menu.innerHTML += `<button class="step-btn" id="btn-${i}" onclick="loadStep(${i})">${i}단계</button>`;
         requestFullScreen(); sendToCloud("입장");
-        setInterval(checkMasterConfig, 15000); // 15초마다 마스터 명령 확인
     }
 
     function loadStep(s) {
@@ -230,16 +188,24 @@
         document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('btn-'+s).classList.add('active');
         document.getElementById('submitBtn').style.display = 'inline-block';
-        problemSeed = parseInt(userData.id) + s * 1000;
+        
+        // 각 단계별 고정 문제 생성을 위해 시드 결합
+        problemSeed = masterSeed + s * 1000;
+        
         const area = document.getElementById('problemArea'); area.innerHTML = ''; currentAnswers = [];
         for(let i=0; i<20; i++) {
             let p = generateProblem(s); currentAnswers.push(p.ans);
             let ui = (s <= 2) ? `<input type="text" id="ans-${i}" class="int-input" inputmode="numeric">` :
                 `<div class="frac-group"><button class="sign-btn active" onclick="this.innerText=(this.innerText=='+'?'-':'+')">+</button><div class="frac-inputs"><input type="text" id="num-${i}" inputmode="numeric"><hr><input type="text" id="den-${i}" inputmode="numeric" value="1"></div></div>`;
-            area.innerHTML += `<div class="prob-card"><b>${i+1}.</b> ${p.html} = <div class="input-row">${ui}<span class="correct-label" id="lab-${i}" style="display:${masterRevealState?'inline':'none'}; color:red; font-weight:bold; margin-left:10px;">[정답: ${p.ans.n}${p.ans.d===1?'':'/'+p.ans.d}]</span></div></div>`;
+            area.innerHTML += `<div class="prob-card"><b>${i+1}.</b> ${p.html} = <div class="input-row">${ui}</div></div>`;
         }
         if (window.MathJax && window.MathJax.typeset) window.MathJax.typeset();
         area.scrollTop = 0; sendToCloud(s + "단계 진행");
+    }
+
+    async function sendToCloud(status, score = '-') {
+        if (!userData.id || !isLive) return;
+        fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ sid: userData.id, name: userData.name, status: status, step: currentStep, score: score, time: new Date().toLocaleTimeString() })}).catch(e => {});
     }
 
     function grade() {
@@ -259,10 +225,10 @@
         alert(score + "점 제출됨"); sendToCloud("제출완료", score);
     }
 
-    function adminAuth() { if(prompt("Pass?") === "tngkr1234") { isAdminOpen = true; document.getElementById('adminPanel').style.display='block'; updateAdminDisplay(); setInterval(updateAdminDisplay, 10000); } }
+    function adminAuth() { if(prompt("Pass?") === "tngkr1234") { document.getElementById('adminPanel').style.display='block'; } }
     function requestFullScreen() { const el = document.documentElement; if (el.requestFullscreen) el.requestFullscreen(); else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen(); }
-    window.addEventListener('blur', () => { if(isLive) { document.getElementById('lockOverlay').style.display = 'flex'; sendToCloud("⚠️ 이탈"); } });
-    window.addEventListener('focus', () => { if(isLive) { document.getElementById('lockOverlay').style.display = 'none'; sendToCloud(currentStep + "단 복귀"); } });
+    window.addEventListener('blur', () => { if(isLive) sendToCloud("⚠️ 이탈"); });
+    window.addEventListener('focus', () => { if(isLive) sendToCloud(currentStep + "단 복귀"); });
 </script>
 </body>
 </html>
